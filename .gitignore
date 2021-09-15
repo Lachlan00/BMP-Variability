@@ -1,0 +1,11 @@
+**/data
+**/output
+**/TEST_*.py
+**/__pycache__
+**/.ipynb_checkpoints
+**/.Rapp.history
+
+# Hidden Files
+*.Rproj.user
+*.Rproj
+*.Rhistory
