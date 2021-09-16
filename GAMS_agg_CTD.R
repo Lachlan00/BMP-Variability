@@ -4,6 +4,7 @@ library(cmocean)
 library(geosphere)
 library(viridisLite)
 library(mgcv)
+library(tidymv)
 
 #------------------#
 #  Pre Processing  #
@@ -51,70 +52,70 @@ agg$crossShoreDist <- agg$crossShoreDist/1000
 #------------#
 # Thanks Martin for looking at this!
 # GAMS to go here
-head(agg)
-# Martin: the process for this is as follows:
-# 0. use AIC for model selection
-# 1.fit a null model - make sure we are doing better than a mean
-# 2. check the influence of temperature and salinity
-# 3.  check model performance
-# 4. with the 'best' model from step. 2 see if position is important.
-
-#null:
-m0=gam(Sv_mean~1+survey,data=agg)
-#temperature:
-m1=gam(Sv_mean~s(CTD_temp,k=5,bs='cr'),data=agg)
-#salinty:
-m2=gam(Sv_mean~s(CTD_salt,k=5,bs='cr'),data=agg)
-#temperature and salinity:
-m3=gam(Sv_mean~s(CTD_temp,k=5,bs='cr')+s(CTD_salt,k=5,bs='cr'),data=agg)
-#check AIC:
-AIC_v=sapply(list(m0,m1,m2,m3),function(x) AIC(x))
-which.min(AIC_v) #m3 is the 'best' one:
-
-#model diganostics for m3
-hist(residuals(m3,tyep='deviance')) #not great
-qq.gam(m3) #not great either
-plot(m3$model$Sv_mean,fitted(m3)) #pretty ordinary
-
-#lets try adding in survey:
-m4=gam(Sv_mean~s(CTD_temp,k=5,bs='cr',by=survey)+
-         s(CTD_salt,k=5,bs='cr',by=survey)+survey,data=agg)
-AIC_too_v=sapply(list(m3,m4),function(x) AIC(x))
-
-#model diagnostics for m4
-hist(residuals(m4,type='deviance')) #not great - this suggests we are missing an explanatory variable
-qq.gam(m4) #not great either
-plot(m4$model$Sv_mean,fitted(m4)) #little better
-plot(m4) #salinity doesn't look like its fitting very well
-summary(m4)
-AIC(m4)
-
-m5=gam(Sv_mean~s(CTD_temp,k=5,bs='cr',by=survey)+
-         s(CTD_salt,bs='cr',by=survey)+survey,data=agg)
-
-#not too happy with the salinity modelling
-
-#I wonder if there is any merit in fitting T~S space;
-m6=gam(Sv_mean~s(CTD_temp,CTD_salt,by=survey)+survey,data=agg)
-hist(residuals(m6,type='deviance')) #not great - suggests we are missing an explanatory variable?
-qq.gam(m6) #not great either
-#no, still rubbish
-
-#lets try distances and depth
-#crosstrack offshore:
-m7=gam(Sv_mean~s(CTD_temp,k=5,bs='cr',by=survey)+
-         s(CTD_salt,bs='cr',by=survey)+survey+
-         s(crossShoreDist,k=5,bs='cr'),data=agg)
-AIC(m7);AIC(m5)
-hist(residuals(m7,type='deviance')) #not great 
-qq.gam(m7) #not great either
-
-#depth:
-m8=gam(Sv_mean~s(CTD_temp,k=5,bs='cr',by=survey)+
-         s(CTD_salt,bs='cr',by=survey)+survey+
-         s(Depth_mean,k=5,bs='cr'),data=agg)
-AIC(m8);AIC(m7);AIC(m5)
-#depth alone isn't great
+# head(agg)
+# # Martin: the process for this is as follows:
+# # 0. use AIC for model selection
+# # 1.fit a null model - make sure we are doing better than a mean
+# # 2. check the influence of temperature and salinity
+# # 3.  check model performance
+# # 4. with the 'best' model from step. 2 see if position is important.
+# 
+# #null:
+# m0=gam(Sv_mean~1+survey,data=agg)
+# #temperature:
+# m1=gam(Sv_mean~s(CTD_temp,k=5,bs='cr'),data=agg)
+# #salinty:
+# m2=gam(Sv_mean~s(CTD_salt,k=5,bs='cr'),data=agg)
+# #temperature and salinity:
+# m3=gam(Sv_mean~s(CTD_temp,k=5,bs='cr')+s(CTD_salt,k=5,bs='cr'),data=agg)
+# #check AIC:
+# AIC_v=sapply(list(m0,m1,m2,m3),function(x) AIC(x))
+# which.min(AIC_v) #m3 is the 'best' one:
+# 
+# #model diganostics for m3
+# hist(residuals(m3,tyep='deviance')) #not great
+# qq.gam(m3) #not great either
+# plot(m3$model$Sv_mean,fitted(m3)) #pretty ordinary
+# 
+# #lets try adding in survey:
+# m4=gam(Sv_mean~s(CTD_temp,k=5,bs='cr',by=survey)+
+#          s(CTD_salt,k=5,bs='cr',by=survey)+survey,data=agg)
+# AIC_too_v=sapply(list(m3,m4),function(x) AIC(x))
+# 
+# #model diagnostics for m4
+# hist(residuals(m4,type='deviance')) #not great - this suggests we are missing an explanatory variable
+# qq.gam(m4) #not great either
+# plot(m4$model$Sv_mean,fitted(m4)) #little better
+# plot(m4) #salinity doesn't look like its fitting very well
+# summary(m4)
+# AIC(m4)
+# 
+# m5=gam(Sv_mean~s(CTD_temp,k=5,bs='cr',by=survey)+
+#          s(CTD_salt,bs='cr',by=survey)+survey,data=agg)
+# 
+# #not too happy with the salinity modelling
+# 
+# #I wonder if there is any merit in fitting T~S space;
+# m6=gam(Sv_mean~s(CTD_temp,CTD_salt,by=survey)+survey,data=agg)
+# hist(residuals(m6,type='deviance')) #not great - suggests we are missing an explanatory variable?
+# qq.gam(m6) #not great either
+# #no, still rubbish
+# 
+# #lets try distances and depth
+# #crosstrack offshore:
+# m7=gam(Sv_mean~s(CTD_temp,k=5,bs='cr',by=survey)+
+#          s(CTD_salt,bs='cr',by=survey)+survey+
+#          s(crossShoreDist,k=5,bs='cr'),data=agg)
+# AIC(m7);AIC(m5)
+# hist(residuals(m7,type='deviance')) #not great 
+# qq.gam(m7) #not great either
+# 
+# #depth:
+# m8=gam(Sv_mean~s(CTD_temp,k=5,bs='cr',by=survey)+
+#          s(CTD_salt,bs='cr',by=survey)+survey+
+#          s(Depth_mean,k=5,bs='cr'),data=agg)
+# AIC(m8);AIC(m7);AIC(m5)
+# #depth alone isn't great
 
 #both cross track and depth
 ###RUN THIS!
@@ -123,22 +124,23 @@ agg$depth_km=agg$Depth_mean/1e3
 m9=gam(Sv_mean~s(CTD_temp,k=5,bs='cr',by=survey)+
          s(CTD_salt,bs='cr',by=survey)+survey+
          s(depth_km,k=5,bs='cr') + s(crossShoreDist,k=5,bs='cr'),data=agg)
-AIC(m9);AIC(m8);AIC(m7);AIC(m5) #m9 is best so far
+#AIC(m9);AIC(m8);AIC(m7);AIC(m5) #m9 is best so far
 #####
 
-#combined smooth of depth and cross-shore:
-m10=gam(Sv_mean~s(CTD_temp,k=5,bs='cr',by=survey)+
-         s(CTD_salt,bs='cr',by=survey)+survey+
-         s(depth_km,crossShoreDist),data=agg)
-AIC(m10);AIC(m9) #m9 is better
+# #combined smooth of depth and cross-shore:
+# m10=gam(Sv_mean~s(CTD_temp,k=5,bs='cr',by=survey)+
+#          s(CTD_salt,bs='cr',by=survey)+survey+
+#          s(depth_km,crossShoreDist),data=agg)
+# AIC(m10);AIC(m9) #m9 is better
+# 
+# #lets go with m9:
+ summary(m9)
+ plot(m9) 
+# 
+# #try and make some plots following:
+# #https://cran.r-project.org/web/packages/tidymv/vignettes/predict-gam.html
 
-#lets go with m9:
-summary(m9)
-plot(m9) 
-#to do make predictions within the data!
-
-
-
+model_p <- tidymv::predict_gam(m9)
 
 #-------------#
 #    Plots    #
