@@ -94,7 +94,50 @@ m5=gam(Sv_mean~s(CTD_temp,k=5,bs='cr',by=survey)+
 
 #not too happy with the salinity modelling
 
-#
+#I wonder if there is any merit in fitting T~S space;
+m6=gam(Sv_mean~s(CTD_temp,CTD_salt,by=survey)+survey,data=agg)
+hist(residuals(m6,type='deviance')) #not great - suggests we are missing an explanatory variable?
+qq.gam(m6) #not great either
+#no, still rubbish
+
+#lets try distances and depth
+#crosstrack offshore:
+m7=gam(Sv_mean~s(CTD_temp,k=5,bs='cr',by=survey)+
+         s(CTD_salt,bs='cr',by=survey)+survey+
+         s(crossShoreDist,k=5,bs='cr'),data=agg)
+AIC(m7);AIC(m5)
+hist(residuals(m7,type='deviance')) #not great 
+qq.gam(m7) #not great either
+
+#depth:
+m8=gam(Sv_mean~s(CTD_temp,k=5,bs='cr',by=survey)+
+         s(CTD_salt,bs='cr',by=survey)+survey+
+         s(Depth_mean,k=5,bs='cr'),data=agg)
+AIC(m8);AIC(m7);AIC(m5)
+#depth alone isn't great
+
+#both cross track and depth
+###RUN THIS!
+agg$depth_km=agg$Depth_mean/1e3
+
+m9=gam(Sv_mean~s(CTD_temp,k=5,bs='cr',by=survey)+
+         s(CTD_salt,bs='cr',by=survey)+survey+
+         s(depth_km,k=5,bs='cr') + s(crossShoreDist,k=5,bs='cr'),data=agg)
+AIC(m9);AIC(m8);AIC(m7);AIC(m5) #m9 is best so far
+#####
+
+#combined smooth of depth and cross-shore:
+m10=gam(Sv_mean~s(CTD_temp,k=5,bs='cr',by=survey)+
+         s(CTD_salt,bs='cr',by=survey)+survey+
+         s(depth_km,crossShoreDist),data=agg)
+AIC(m10);AIC(m9) #m9 is better
+
+#lets go with m9:
+summary(m9)
+plot(m9) 
+#to do make predictions within the data!
+
+
 
 
 #-------------#
