@@ -11,8 +11,9 @@ library(mgcv)
 # Read in data
 # data path - specific to Martin's laptop
 dat_dir='/home/martin/Documents/lac_dat/surveys/'
+dat_dir='data/'
 #agg <- read.csv('./data/surveys/acoustics/agg_CTD_interporlations.csv')
-agg <- read.csv(paste0(dat_dir,'acoustics/agg_CTD_interporlations.csv'))
+agg <- read.csv(paste0(dat_dir,'surveys/acoustics/agg_CTD_interporlations.csv'))
 
 transect_lines <- read.csv(paste0(dat_dir,'meta/transect_lines.csv'))
 

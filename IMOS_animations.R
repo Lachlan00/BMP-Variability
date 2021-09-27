@@ -1,5 +1,5 @@
 # Survey plots
-source('IMOS.R')
+source('R/IMOS.R')
 library(lubridate)
 
 # Get survey periods

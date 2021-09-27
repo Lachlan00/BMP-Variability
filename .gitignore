@@ -9,3 +9,7 @@
 *.Rproj.user
 *.Rproj
 *.Rhistory
+
+# Other files
+BMP070_aggregated_timeseries_plot.ipynb
+Temperature_ggregated_timeseries_plot.ipynb
