@@ -164,18 +164,42 @@ for (var in vars){
 ######
 # TS #
 ######
-for (var in vars){
-  cast.df['var'] = cast.df[var]
-  p <- ggplot(cast.df, aes(x=salt_mean, y=temp_mean, col=var)) +
-    geom_point(size=3) +
+# for (var in vars){
+#   cast.df['var'] = cast.df[var]
+#   p <- ggplot(cast.df, aes(x=salt_mean, y=temp_mean, col=var)) +
+#     geom_point(size=3) +
+#     facet_wrap(~survey) +
+#     theme_bw() +
+#     scale_color_viridis() +
+#     labs(x="Salinity (PSU)",
+#          y="Temperature (\u00B0C)") +
+#     ggtitle(var)
+#   ggsave(paste0('output/temp/agg_',var,'.png'), p)
+# }
+
+####################
+# area Sv mean sum #
+####################
+surveys <- unique(cast.df$survey)
+for (i in 1:length(surveys)){
+  p <- ggplot(cast.df[cast.df$survey == surveys[i],],
+              aes(x=salt_mean, y=temp_mean,
+                  col=area_Sv_mean_sum, z=area_Sv_mean)) +
+    geom_density2d(col='grey', alpha=.4, size=0.5) +
+    geom_point(size=1.5) +
     facet_wrap(~survey) +
     theme_bw() +
-    scale_color_viridis() +
+    scale_color_viridis(limits=c(min(cast.df$area_Sv_mean),
+                                 max(cast.df$area_Sv_mean))) +
+    lims(x=c(min(cast.df$salt_mean), max(cast.df$salt_mean)),
+         y=c(min(cast.df$temp_mean), max(cast.df$temp_mean))) +
     labs(x="Salinity (PSU)",
-         y="Temperature (\u00B0C)") +
-    ggtitle(var)
-  ggsave(paste0('output/temp/agg_',var,'.png'), p)
+         y="Temperature (\u00B0C)",
+         col='Sv mean m2')
+  ggsave(paste0('output/TS/',surveys[i],'_Sv_mean.png'), p,
+         width=5, height=4)
 }
+
 ################
 # Correlations #
 ################
@@ -189,6 +213,13 @@ for (i in 1:length(cor.ls)){
              lab=T, type='upper', title=names(cor.ls[i])) +
     theme(legend.position = 'none')
 }
-do.call("grid.arrange", c(p.ls, ncol=floor(sqrt(length(p.ls)))))
+p <- do.call("grid.arrange", c(p.ls, ncol=floor(sqrt(length(p.ls)))))
+ggsave('output/correlations/corr_all.png', p, height=12, width=12, bg='white')
 
+# plot each
+names(p.ls) <- unique(cor.df$survey)
+for (i in 1:length(p.ls)){
+  ggsave(paste0('output/correlations/corr_',names(p.ls[i]),'.png'), p.ls[[i]], bg='white',
+         width=4, height=4)
+}
 

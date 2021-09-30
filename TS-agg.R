@@ -94,7 +94,7 @@ p <- ggplot(cast.df, aes(x=salt_mean, y=temp_mean, col=Sv_mean)) +
        col=expression(S[v]~mean)) +
   ggtitle('T/S and mean swarm Sv_mean')
 
-ggsave('output/TS/TS_mean_swarm_Sv.png', p)
+ggsave('output/TS/TS_mean_swarm_Sv.png', p, width=10, height=3)
 
 # Just 2015/2018
 p <- ggplot(cast.df[cast.df$survey %in% c('2015_S1', '2018_S1'),],
@@ -108,7 +108,7 @@ p <- ggplot(cast.df[cast.df$survey %in% c('2015_S1', '2018_S1'),],
        col=expression(S[v]~mean)) +
   ggtitle('T/S and mean swarm Sv_mean')
 
-ggsave('output/TS/Extreme_TS_mean_swarm_Sv.png', p)
+ggsave('output/TS/Extreme_TS_mean_swarm_Sv.png', p, width=10, height=3)
 
 # Just 2015/2018 - contour version
 p <- ggplot(cast.df[cast.df$survey %in% c('2015_S1', '2018_S1'),],
@@ -122,7 +122,7 @@ p <- ggplot(cast.df[cast.df$survey %in% c('2015_S1', '2018_S1'),],
        col=expression(S[v]~mean)) +
   ggtitle('T/S and mean swarm Sv_mean')
 
-ggsave('output/TS/Extreme_TS_mean_swarm_Sv.png', p)
+ggsave('output/TS/Extreme_TS_mean_swarm_Sv.png', p, width=10, height=3)
 
 #--------------------------#
 #    Cumulative Sv mean    #
@@ -137,7 +137,7 @@ p <- ggplot(cast.df, aes(x=salt_mean, y=temp_mean, col=Sv_mean_sum)) +
        col=expression(S[v]~mean)) +
   ggtitle('T/S and cumulative swarm Sv_mean')
 
-ggsave('output/TS/TS_cumulative_swarm_Sv.png', p)
+ggsave('output/TS/TS_cumulative_swarm_Sv.png', p, width=10, height=3)
 
 # Just 2015/2018
 p <- ggplot(cast.df[cast.df$survey %in% c('2015_S1', '2018_S1'),],
@@ -151,7 +151,7 @@ p <- ggplot(cast.df[cast.df$survey %in% c('2015_S1', '2018_S1'),],
        col=expression(S[v]~mean)) +
   ggtitle('T/S and cumulative swarm Sv_mean')
 
-ggsave('output/TS/Extreme_TS_cumulative_swarm_Sv.png', p)
+ggsave('output/TS/Extreme_TS_cumulative_swarm_Sv.png', p, width=10, height=3)
 
 #----------------------#
 #    Corrected Area    #
@@ -166,7 +166,7 @@ p <- ggplot(cast.df, aes(x=salt_mean, y=temp_mean, col=correct_area_sum)) +
        col=expression(S[v]~mean)) +
   ggtitle('T/S and cumulative swarm corrected_area')
 
-ggsave('output/TS/TS_cumulative_swarm_corrected_area.png', p)
+ggsave('output/TS/TS_cumulative_swarm_corrected_area.png', p, width=10, height=3)
 
 # Just 2015/2018
 p <- ggplot(cast.df[cast.df$survey %in% c('2015_S1', '2018_S1'),],
@@ -180,24 +180,27 @@ p <- ggplot(cast.df[cast.df$survey %in% c('2015_S1', '2018_S1'),],
        col=expression(S[v]~mean)) +
   ggtitle('T/S and cumulative swarm corrected_area')
 
-ggsave('output/TS/Extreme_TS_cumulative_swarm_corrected_area.png', p)
+ggsave('output/TS/Extreme_TS_cumulative_swarm_corrected_area.png', p, width=10, height=3)
 
 #--------------------#
 #    CTD Boxplots    #
 #--------------------#
 # Temperature
-ggplot(CTD$data, aes(x=survey_id, y=temperature)) +
+p <- ggplot(CTD$data, aes(x=survey_id, y=temperature)) +
   geom_boxplot() + 
   theme_bw()
+ggsave('output/temp/CTD_temp.png', p, width=10, height=3)
 
 ggplot(CTD$data[CTD$data$survey_id %in% c('2015_S1', '2018_S1'),], aes(x=survey_id, y=temperature)) +
   geom_boxplot() + 
   theme_bw()
 
 # Salinty
-ggplot(CTD$data, aes(x=survey_id, y=salinity)) +
+p <- ggplot(CTD$data, aes(x=survey_id, y=salinity)) +
   geom_boxplot() + 
-  theme_bw()
+  theme_bw() +
+  lims(y=c(34, 36))
+ggsave('output/temp/CTD_salt.png', p, width=10, height=3)
 
 ggplot(CTD$data[CTD$data$survey_id %in% c('2015_S1', '2018_S1'),], aes(x=survey_id, y=salinity)) +
   geom_boxplot() + 
@@ -221,11 +224,14 @@ ggcorrplot(cormat_2018_S1, colors=c('#0b3487','#ffffff','#87130b'), lab=T, type=
 #------------------------#
 #    Swarm Histograms    #
 #------------------------#
-ggplot(agg[agg$survey %in% c('2015_S1', '2018_S1'),],
+# ggplot(agg[agg$survey %in% c('2015_S1', '2018_S1'),],
+ggplot(agg,
        aes(x=Sv_mean, col=survey, fill=survey)) +
-  geom_density(alpha=.6) +
+  geom_density(alpha=.3) +
   xlim(-70, -25) +
-  theme_bw()
+  theme_bw() +
+  facet_wrap(~survey) +
+  theme(legend.position = 'none')
 
 ggplot(agg[agg$survey %in% c('2015_S1', '2018_S1'),],
        aes(x=Corrected_area, col=survey, fill=survey)) +
