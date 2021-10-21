@@ -158,7 +158,7 @@ for (var in vars){
     labs(x="Survey",
          y=var) +
     ggtitle(var)
-  ggsave(paste0('output/temp/boxplots_',var,'.png'), p)
+  ggsave(paste0('output/temp/boxplots_',var,'.png'), p, width=10, height=3)
 }
 
 ######

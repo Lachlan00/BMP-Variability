@@ -227,15 +227,17 @@ ggcorrplot(cormat_2018_S1, colors=c('#0b3487','#ffffff','#87130b'), lab=T, type=
 # ggplot(agg[agg$survey %in% c('2015_S1', '2018_S1'),],
 ggplot(agg,
        aes(x=Sv_mean, col=survey, fill=survey)) +
-  geom_density(alpha=.3) +
+  geom_density(alpha=.6) +
   xlim(-70, -25) +
   theme_bw() +
   facet_wrap(~survey) +
   theme(legend.position = 'none')
 
-ggplot(agg[agg$survey %in% c('2015_S1', '2018_S1'),],
+ggplot(agg,
        aes(x=Corrected_area, col=survey, fill=survey)) +
   geom_density(alpha=.6) +
   xlim(-10, 50) +
-  theme_bw()
+  theme_bw() +
+  facet_wrap(~survey) +
+  theme(legend.position = 'none')
 
