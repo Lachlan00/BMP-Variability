@@ -9,6 +9,10 @@ library(TMB)
 library(reshape2)
 source('R/acoustics_functions.R')
 
+# NOTE:
+# I did not filter aggregation data to only include
+# CTD sampled area. Not sure if I should.
+
 #-------------#
 #  Load data  #
 #-------------#
@@ -29,7 +33,7 @@ p.temp <- ggplot(cast.df, aes(x=survey, y=temp_mean)) +
   stat_summary(fun=mean, geom="line", aes(group=1), color='darkred') +
   theme_bw() +
   xlab(NULL) +
-  ylab("Temperature")
+  ylab("Temperature (\u00B0C)")
 
 # Salinty
 p.salt <- ggplot(cast.df, aes(x=survey, y=salt_mean)) +
@@ -51,13 +55,13 @@ p.swarms <- ggplot(cast.df, aes(x=survey, y=area_swarm_count)) +
   scale_y_continuous(limits = quantile(cast.df$area_swarm_count, c(0.1, 0.9)))
 
 # Prey avliability
-p.available <- ggplot(cast.df, aes(x=survey, y=area_corrected_area_sum)) +
+p.available <- ggplot(cast.df, aes(x=survey, y=area_corrected_area_sum*100)) +
   geom_boxplot(outlier.shape = NA, fill='lightgrey') + 
   stat_summary(fun=mean, geom="line", aes(group=1), color='darkred') +
   theme_bw() +
   xlab(NULL) +
   ylab("Prey availablility (%)") +
-  scale_y_continuous(limits = quantile(cast.df$area_corrected_area_sum, c(0.1, 0.9)))
+  scale_y_continuous(limits = quantile(cast.df$area_corrected_area_sum*100, c(0.1, 0.9)))
 
 # mean aggregation density
 p.density <- ggplot(cast.df, aes(x=survey, y=Sv_mean_mean)) +
@@ -83,17 +87,27 @@ p.size <- ggplot(cast.df, aes(x=survey, y=corrected_area_mean)) +
   stat_summary(fun=mean, geom="line", aes(group=1), color='darkred') +
   theme_bw() +
   xlab(NULL) +
-  ylab("Swarm size") +
+  ylab("Swarm size (m2)") +
   scale_y_continuous(limits = quantile(cast.df$corrected_area_mean, c(0.1, 0.9)))
 
+# Mean depth of swarms
+p.depth <- ggplot(cast.df, aes(x=survey, y=swarm_mean_depth)) +
+  geom_boxplot(outlier.shape = NA, fill='lightgrey') + 
+  stat_summary(fun=mean, geom="line", aes(group=1), color='darkred') +
+  theme_bw() +
+  xlab(NULL) +
+  ylab("Mean swarm depth (m)") +
+  scale_y_reverse(limits = rev(quantile(cast.df$swarm_mean_depth, c(0.1, 0.9))))
+
 ggarrange(p.temp, p.salt, ncol=1)
-ggarrange(p.swarms, p.available, p.biomass, p.density, p.size, ncol=1)
+ggarrange(p.swarms, p.available, p.biomass, p.density, p.size, p.depth, ncol=2, nrow=3)
 
 # Calculate correlations between these variables
 cor.dat <- mean.casts[,c('temp_mean', 'salt_mean', 'area_swarm_count', 'corrected_area_mean',
-                         'Sv_mean_mean', 'area_corrected_area_sum', 'area_Sv_mean_sum')]
-names(cor.dat) <- c('Temperature', 'Salinity', 'Swarm Count', 'Swarm size',
-                    'Swarm Density', 'Prey Availability', 'Biomass')
+                         'swarm_mean_depth','Sv_mean_mean',
+                         'area_corrected_area_sum', 'area_Sv_mean_sum')]
+names(cor.dat) <- c('Temperature', 'Salinity', 'Swarm count', 'Swarm size', 'Swarm depth',
+                    'Swarm density', 'Prey availability', 'Biomass')
 # Correlation plot
 ggcorrplot(cor(cor.dat),
            colors=c('#0b3487','#ffffff','#87130b'),

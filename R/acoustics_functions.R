@@ -96,7 +96,8 @@ outlier.rm <- function(df, variables, threshold=.99, verbose=T){
 #------------------------------------------#
 # Make CTD/agg data frame of each CTD cast #
 #------------------------------------------#
-CTD.agg <- function(CTD, agg, filter=TRUE,
+# CTD_area_agg filters agg data so only agg data in CTD area is considered
+CTD.agg <- function(CTD, agg, filter=TRUE, CTD_area_agg=FALSE,
                     station_fn='./data/surveys/meta/transect_df.csv'){
   # Load transect station data
   stations <- read.csv(station_fn) 
@@ -133,7 +134,13 @@ CTD.agg <- function(CTD, agg, filter=TRUE,
     cast.df[i, c('survey', 'cast_id', 'station_id', 'cast_time_UTC')] <- 
       cast[, c('survey_id', 'file_name', 'transect_id', 'cast_time_UTC')]
     cast.df[i, 'max_depth'] <- ceiling(max(cast.data$depth))
+    # filter depth to CTD area if needed
+    if (CTD_area_agg){
+      cast.agg <- cast.agg[cast.agg$Depth_mean < ceiling(cast.df[i, 'max_depth']),]
+    }
+    if (nrow(cast.agg) == 0) next
     cast.df[i, 'swarm_count'] <- nrow(cast.agg)
+    cast.df[i, 'swarm_mean_depth'] <- mean(cast.agg$Depth_mean, na.rm=T)
     # Cast data
     cast.df[i, c('temp_min', 'temp_mean', 'temp_max', 'salt_min', 'salt_mean', 'salt_max')] <-
       c(min(cast.data$temperature), mean(cast.data$temperature), max(cast.data$temperature),

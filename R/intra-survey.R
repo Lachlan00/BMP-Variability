@@ -56,8 +56,15 @@ ggarrange(p.biomass, p.density, legend='none')
 #                       'corrected_area_mean', 'Sv_mean_mean', 'area_corrected_area_sum', 'area_Sv_mean_sum')]
 # names(cor.dat) <- c('Survey', 'Temperature', 'Salinity', 'Swarm Count',
 #                     'Swarm Size', 'Swarm Density', 'Prey Availability', 'Biomass')
-cor.dat <- cast.df[,c('survey', 'temp_mean', 'salt_mean', 'area_Sv_mean_sum')]
-names(cor.dat) <- c('Survey', 'Temperature', 'Salinity', 'Biomass')
+cor.dat <- cast.df[,c('survey',
+                      'temp_mean', 'salt_mean', 'area_swarm_count', 'corrected_area_mean',
+                         'swarm_mean_depth','Sv_mean_mean',
+                         'area_corrected_area_sum', 'area_Sv_mean_sum')]
+names(cor.dat) <- c('Survey',
+                    'Temperature', 'Salinity', 'Swarm count', 'Swarm size', 'Swarm depth',
+                    'Swarm density', 'Prey availability', 'Biomass')
+# cor.dat <- cast.df[,c('survey', 'temp_mean', 'salt_mean', 'area_Sv_mean_sum')]
+# names(cor.dat) <- c('Survey', 'Temperature', 'Salinity', 'Biomass')
 
 p.ls <- list()
 i <- 1
@@ -70,7 +77,8 @@ for (survey in unique(cor.dat$Survey)){
           axis.text.y = element_text(size=9)) +
     ggtitle(survey)
   p.ls[[i]] <- p
+  ggsave(paste0('./output/correlations/corr_',survey,'.png'), p)
   i <- i + 1
 }
-ggarrange(plotlist=p.ls)
+cggarrange(plotlist=p.ls)
 
