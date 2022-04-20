@@ -77,8 +77,10 @@ for (survey in unique(cor.dat$Survey)){
           axis.text.y = element_text(size=9)) +
     ggtitle(survey)
   p.ls[[i]] <- p
-  ggsave(paste0('./output/correlations/corr_',survey,'.png'), p)
+  #ggsave(paste0('./output/correlations/corr_',survey,'.png'), p)
   i <- i + 1
 }
-cggarrange(plotlist=p.ls)
+p.corr.intra <- ggarrange(plotlist=p.ls)
+ggsave("./figures/corr/intra_corr.png", p.corr.intra, width=14, height=14)
+
 

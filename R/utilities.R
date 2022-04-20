@@ -360,4 +360,10 @@ grid.polygons <- function(grid.df, ids=NULL){
   return(polys)
 }
 
+# Make normal
+make_normal <- function(x, low=0, high=1){
+  normalised = (x-min(x))/(max(x)-min(x))
+  normalised = normalised*(high - low) + low
+  return(normalised)
+}
 

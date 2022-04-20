@@ -1005,3 +1005,69 @@ plot.CTD.survey.path <- function(CTD_meta, split_dates=TRUE, color_time=FALSE){
   }
   return(path_plot)
 }
+
+
+############################
+# Plot mean for CTD survey #
+############################
+CTD.plot.survey.mean <- function(CTD, survey_id,
+                                 salt_range=NULL, temp_range=NULL){
+  data <- CTD$data
+  meta <- CTD$meta
+  # Pre filter data
+  data <- data[data$survey_id %in% survey_id,]
+  
+  # aggregate data
+  data <- data[,c('depth','temperature','salinity','survey_id')]
+  data$depth <- round(data$depth)
+  if (length(survey_id) > 1){
+    data <- aggregate(data, by=list(data$depth, data$survey_id), mean)[,c(2:5)]
+    names(data)[1] <- 'survey_id'
+  } else {
+    data[,c('depth','temperature','salinity')]
+    data <- aggregate(data, by=list(data$depth), mean)[,c(2:4)]
+  }
+  
+  # Rescale salinity
+  if (!is.null(salt_range)){
+    salt_rescale <- scales::rescale(c(salt_range[1], data$salinity, salt_range[2]),
+                                    to=c(min(data$temperature),
+                                         max(data$temperature)))
+    data$salt_rescale <- salt_rescale[2:(length(salt_rescale)-1)] 
+  } else {
+    data$salt_rescale <- scales::rescale(data$salinity,
+                                         to=c(min(data$temperature), 
+                                              max(data$temperature)))
+    salt_range <- c(min(data$salinity), max(data$salinity))
+  }
+  # make title
+  if (length(survey_id) == 1){
+    title <- survey_id
+  }
+  
+
+  # Set colours
+  colors <- c("T" = "darkred", "S" = "darkgreen")
+  
+  # make the plot
+  p <- ggplot(data=data, aes(x=depth)) +
+    geom_path(aes(y=temperature,  color='T'), size=1, alpha=.8) +
+    geom_point(aes(y=temperature), size=1, alpha=.8, col='darkred') +
+    geom_path(aes(y=salt_rescale, color='S'), size=1, alpha=.8) +
+    geom_point(aes(y=salt_rescale), size=1, alpha=.8, col='darkgreen') +
+    ylab('Temperature (\u00B0C)') + xlab('Depth (m)') +
+    scale_color_manual(values = colors) + labs(color=NULL) +
+    scale_y_continuous(sec.axis = sec_axis(~scales::rescale(., to=salt_range),
+                                           name="Salinity (PSU)")) +
+    coord_flip() +
+    scale_x_reverse()
+  if (length(survey_id) > 1){
+    p <- p + facet_wrap(~survey_id)
+  }
+  
+  if (!is.null(temp_range)){
+    p <- p + ylim(temp_range)
+  }
+  
+  return(p)
+}
