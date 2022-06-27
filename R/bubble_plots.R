@@ -495,7 +495,7 @@ cor.dat$Survey <- NULL
 # Correlation plot
 p.corr.inter <- ggcorrplot(cor(cor.dat),
                            colors=c('#0b3487','#ffffff','#87130b'),
-                           lab=T, type='upper', p.mat=cor_pmat(cor.d05at)) +
+                           lab=T, type='upper', p.mat=cor_pmat(cor.dat)) +
   theme(legend.position = 'none')
 ggsave("./figures/corr/intermean_corr.png", p.corr.inter, width=7, height=7)
 
