@@ -377,6 +377,51 @@ p.agg.survey <- ggarrange(plotlist = p.ls)
 #names(cast.df)
 ggsave('./figures/TS/agg-survey-scatter.png', p.agg.survey, width=7, height=6)
 
+#'---------------------------------------------------------#
+#' __12. Plot Temp against Agg and all data for Clusters__ #
+#'---------------------------------------------------------#
+point_alpha=.43
+se=T
+# AGGs
+p1 <- ggplot(cast.df, aes(x=temp_mean, y=swarm_mean_depth)) +
+  geom_point(shape=3, alpha=point_alpha, mapping=aes(color=cluster, group=cluster)) +
+  geom_smooth(method='glm', alpha=.3, se=se, mapping=aes( color=cluster, group=cluster)) +
+  geom_smooth(method='glm', alpha=.3, se=se, color='black', linetype='dashed') +
+  theme_bw() +
+  scale_y_reverse() + 
+  labs(x='Mean Temperature (°C)', y='Mean Agg. Depth (m)', color='Cluster') +
+  ggtitle('(A) Mean Aggregation Depth')
+
+p2 <- ggplot(cast.df, aes(x=temp_mean, y=area_corrected_area_sum)) +
+  geom_point(shape=3, alpha=point_alpha, mapping=aes(color=cluster, group=cluster)) +
+  geom_smooth(method='glm', alpha=.3, se=se, mapping=aes( color=cluster, group=cluster)) +
+  geom_smooth(method='glm', alpha=.3, se=se, color='black', linetype='dashed') +
+  theme_bw() +
+  labs(x='Mean Temperature (°C)', y='Mean Agg. Coverage (%)', color='Cluster') +
+  ggtitle('(B) Mean Aggregation Coverage')
+
+p3 <- ggplot(cast.df, aes(x=temp_mean, y=Sv_mean_mean)) +
+  geom_point(shape=3, alpha=point_alpha, mapping=aes(color=cluster, group=cluster)) +
+  geom_smooth(method='glm', alpha=.3, se=se, mapping=aes( color=cluster, group=cluster)) +
+  geom_smooth(method='glm', alpha=.3, se=se, color='black', linetype='dashed') +
+  theme_bw() +
+  labs(x='Mean Temperature (°C)', y='Mean Agg. Density (Sv mean)', color='Cluster') +
+  ggtitle('(C) Mean Aggregation Density')
+
+p4 <- ggplot(cast.df, aes(x=temp_mean, y=area_Sv_mean_sum)) +
+  geom_point(shape=3, alpha=point_alpha, mapping=aes(color=cluster, group=cluster)) +
+  geom_smooth(method='glm', alpha=.3, se=se, mapping=aes(color=cluster, group=cluster)) +
+  geom_smooth(method='glm', alpha=.3, se=se, color='black', linetype='dashed') +
+  theme_bw() +
+  labs(x='Mean Temperature (°C)', y='Total Agg. Density (Sv mean)', color='Cluster') +
+  ggtitle('(D) Total Biomass')
+
+p.ls <- list(p1, p2, p3, p4)
+p.ls <- lapply(p.ls, function(p) p + theme(legend.position = 'none'))
+p.agg <- ggarrange(plotlist = p.ls)#, common.legend = T, legend = 'bottom')
+#names(cast.df)
+#ggsave('./figures/TS/agg-cluster-scatter.png', p.agg, width=7, height=6)
+
 
 #'-----------------------------#
 #' __13. Agg coverage vs PCA__ #
