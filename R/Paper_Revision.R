@@ -1,4 +1,4 @@
-setwd("/Users/lachlanphillips/Development/PhD/paper-repos/BMP-Variability")
+setwd("/Users/lachlanphillips/Development/PhD/pape r-repos/BMP-Variability")
 source('R/CTD.R')
 source('R/acoustics_functions.R')
 source('R/modified_functions.R')
@@ -247,8 +247,8 @@ kmeans_dat.TS = kmeans(pc.TS.transform, centers = 2, nstart = 50)
 plot.data.TS <- fviz_cluster.mod(kmeans_dat.TS, data = cor.dat[,1:2], 
                               ellipse=T)
 plot.data.TS$survey <- cast.df$survey
-plot.data.TS$cluster <- gsub('1','B', plot.data.TS$cluster)
-plot.data.TS$cluster <- gsub('2','A', plot.data.TS$cluster)
+plot.data.TS$cluster <- gsub('1','A', plot.data.TS$cluster)
+plot.data.TS$cluster <- gsub('2','B', plot.data.TS$cluster)
 
 # Add clusters to cast.df
 cast.df$cluster_TS <- plot.data.TS$cluster
@@ -334,70 +334,64 @@ p.ls <- list(p1, p2, p3, p4)
 p.ls <- lapply(p.ls, function(p) p + theme(legend.position = 'none'))
 p.agg <- ggarrange(plotlist = p.ls)#, common.legend = T, legend = 'bottom')
 #names(cast.df)
-ggsave('./figures/TS/agg-scatter.png', p.agg, width=7, height=6)
+ggsave('./figures/TS/agg-cluster-scatter.png', p.agg, width=7, height=6)
 
 
 #'-------------------------------------------#
 #' __11. Plot Temp against Agg for Surveys__ #
 #'-------------------------------------------#
 point_alpha=.75
-PCA.x <- pc.transform$PC1
-PCA.x <- cast.df$temp_mean
-PCA.x <- pc.TS$x[,1]
 # AGGs
-p1 <- ggplot(cast.df, aes(x=PCA.x, y=swarm_mean_depth)) +
+p1 <- ggplot(cast.df, aes(x=temp_mean, y=swarm_mean_depth)) +
   geom_point(shape=3, alpha=point_alpha, mapping=aes(color=survey)) +
   geom_smooth(method='lm', alpha=.3, se=F, color='black') +
   theme_bw() +
   scale_y_reverse() + 
-  labs(x='PCA1', y='Mean Agg. Depth (m)', color='Survey') +
+  labs(x='Mean Temperature (°C)', y='Mean Agg. Depth (m)', color='Survey') +
   ggtitle('(A) Mean Aggregation Depth')
 
-p2 <- ggplot(cast.df, aes(x=PCA.x, y=area_corrected_area_sum)) +
+p2 <- ggplot(cast.df, aes(x=temp_mean, y=area_corrected_area_sum)) +
   geom_point(shape=3, alpha=point_alpha, mapping=aes(color=survey)) +
   geom_smooth(method='lm', alpha=.3, se=F, color='black') +
   theme_bw() +
-  labs(x='PCA1', y='Mean Agg. Coverage (%)', color='Survey') +
+  labs(x='Mean Temperature (°C)', y='Mean Agg. Coverage (%)', color='Survey') +
   ggtitle('(B) Mean Aggregation Coverage')
 
-p3 <- ggplot(cast.df, aes(x=PCA.x, y=Sv_mean_mean)) +
+p3 <- ggplot(cast.df, aes(x=temp_mean, y=Sv_mean_mean)) +
   geom_point(shape=3, alpha=point_alpha, mapping=aes(color=survey)) +
   geom_smooth(method='lm', alpha=.3, se=F, color='black') +
   theme_bw() +
-  labs(x='PCA1', y='Mean Agg. Density (Sv mean)', color='Survey') +
+  labs(x='Mean Temperature (°C)', y='Mean Agg. Density (Sv mean)', color='Survey') +
   ggtitle('(C) Mean Aggregation Density')
 
-p4 <- ggplot(cast.df, aes(x=PCA.x, y=area_Sv_mean_sum)) +
+p4 <- ggplot(cast.df, aes(x=temp_mean, y=area_Sv_mean_sum)) +
   geom_point(shape=3, alpha=point_alpha, mapping=aes(color=survey)) +
   geom_smooth(method='lm', alpha=.3, se=F, color='black') +
   theme_bw() +
-  labs(x='PCA1', y='Total Agg. Density (Sv mean)', color='Survey') +
+  labs(x='Mean Temperature (°C)', y='Total Agg. Density (Sv mean)', color='Survey') +
   ggtitle('(D) Total Biomass')
 
 p.ls <- list(p1, p2, p3, p4)
 p.ls <- lapply(p.ls, function(p) p + theme(legend.position = 'none'))
-p.PCA1 <- ggarrange(plotlist = p.ls, common.legend = T, legend = 'right')
+p.agg.survey <- ggarrange(plotlist = p.ls)
 #names(cast.df)
-ggsave('./figures/TS/PCA1TS-scatter.png', p.PCA1, width=7.95, height=6)
-
-
-#'-----------------------------#
-#' __12. Cross shore vs temp__ #
-#'-----------------------------#
-ggplot(cast.df, aes(x=crossShoreDistance, y=temp_mean)) +
-  geom_point(shape=3, alpha=.7) +
-  geom_smooth(method='lm', se=F, color='darkgrey') +
-  theme_bw() +
-  labs(x='Cross Shore Distance (km)', y='Mean Temperature (°C)', color='Cluster') +
-  facet_wrap(~survey)
+ggsave('./figures/TS/agg-survey-scatter.png', p.agg.survey, width=7, height=6)
 
 
 #'-----------------------------#
 #' __13. Agg coverage vs PCA__ #
 #'-----------------------------#
-ggplot(cast.df, aes(x=pc.TS$x[,1], y=area_corrected_area_sum)) +
+ggplot(cast.df, aes(x=temp_mean, y=Sv_mean_mean)) +
   geom_point(shape=3, alpha=0.5) +
-  geom_smooth(method='lm', alpha=.5, se=T, color='black') +
+  geom_smooth(method='lm', alpha=.5, se=F, color='black') +
+  theme_bw() +
+  labs(x='Temperature', y='Mean Agg. Density (Sv mean)', color='Survey') +
+  facet_wrap(~survey, scales='free')
+
+ggplot(cast.df, aes(x=temp_mean, y=swarm_mean_depth)) +
+  geom_point(shape=3, alpha=0.5) +
+  scale_y_reverse() + 
+  geom_smooth(method='lm', alpha=.5, se=F, color='black') +
   theme_bw() +
   labs(x='Temperature', y='Mean Agg. Coverage (%)', color='Survey') +
   facet_wrap(~survey, scales='free')
@@ -406,31 +400,39 @@ ggplot(cast.df, aes(x=pc.TS$x[,1], y=area_corrected_area_sum)) +
 #'----------------------------#
 #' __14. Statistical Models__ #
 #'----------------------------#
-head(cast.df)
-fit.1 <- lme(temp_mean ~ salt_mean, random = ~ 1 | survey, data = cast.df, method='ML')
-fit.2 <- lme(temp_mean ~ salt_mean, random = ~ salt_mean | survey, data = cast.df, method='ML')
-summary(fit.1)
-summary(fit.2)
-plot(fit.1)
-plot(fit.2)
-
-# agg models
-fit.3 <- lme(Sv_mean_mean ~ temp_mean, random = ~ temp_mean | survey, data = cor.dat.sur, method='ML')
-summary(fit.3)
-plot(fit.3)
-
-fit.4 <- lme(swarm_mean_depth ~ temp_mean, random = ~ temp_mean | survey, data = cor.dat.sur, method='ML')
-summary(fit.4)
-plot(fit.4)
-
-fit.3 <- lme(Sv_mean_mean ~ temp_mean, random = ~ temp_mean | survey, data = cor.dat.sur, method='ML')
-summary(fit.3)
-plot(fit.3)
-
-
-
-
-
+#'
+#'### MOVE TOO RMARKDOWN
+#'
+#' saveRDS(cast.df, './data/processed/cast_df_stats.rds')
+#' library(sjPlot) # for statistical plotting
+#' 
+#' #' __GLMS__ #
+#' # Agg depth
+#' hist(log1p(cast.df$swarm_mean_depth))
+#' fit.agg.depth <- glm(log1p(swarm_mean_depth) ~ temp_mean, data=cast.df, family='gaussian')
+#' summary(fit.agg.depth)
+#' tab_model(fit.agg.depth)
+#' 
+#' head(cast.df)
+#' fit.1 <- lme(temp_mean ~ salt_mean, random = ~ 1 | survey, data = cast.df, method='ML')
+#' fit.2 <- lme(temp_mean ~ salt_mean, random = ~ salt_mean | survey, data = cast.df, method='ML')
+#' summary(fit.1)
+#' summary(fit.2)
+#' plot(fit.1)
+#' plot(fit.2)
+#' 
+#' # agg models
+#' fit.3 <- lme(Sv_mean_mean ~ temp_mean, random = ~ temp_mean | survey, data = cor.dat.sur, method='ML')
+#' summary(fit.3)
+#' plot(fit.3)
+#' 
+#' fit.4 <- lme(swarm_mean_depth ~ temp_mean, random = ~ temp_mean | survey, data = cor.dat.sur, method='ML')
+#' summary(fit.4)
+#' plot(fit.4)
+#' 
+#' fit.3 <- lme(Sv_mean_mean ~ temp_mean, random = ~ temp_mean | survey, data = cor.dat.sur, method='ML')
+#' summary(fit.3)
+#' plot(fit.3)
 
 #'----------------------------------#
 #' __N. Extra Experimental Stufff__ #
@@ -478,3 +480,49 @@ ggplot(melt.casts, aes(x=survey, y=value, fill=cluster)) +
   theme(axis.text.x = element_text(angle = 45, hjust=1)) +
   labs(x=NULL)
 
+
+# Offshore temperature gradient
+ggplot(cast.df, aes(x=crossShoreDistance, y=temp_mean)) +
+  geom_point(shape=3, alpha=0.5) +
+  geom_smooth(method='lm', alpha=.5, se=F) +
+  theme_bw() +
+  labs(x='Distance offshore (km)', y='Temperature', color='Cluster') +
+  facet_wrap(~survey, scales='free')
+
+# Offshore biomass gradient
+ggplot(cast.df, aes(x=crossShoreDistance, y=area_Sv_mean_sum)) +
+  geom_point(shape=3, alpha=0.5) +
+  geom_smooth(method='lm', alpha=.5, se=F) +
+  theme_bw() +
+  labs(x='Distance offshore (km)', y='Total biomass (Sv mean)') +
+  facet_wrap(~survey)
+
+# Check total Biomass and color by offshore
+ggplot(cast.df, aes(x=temp_mean, y=area_Sv_mean_sum, color=crossShoreDistance)) +
+  geom_point(shape=16, alpha=1, size=2.5) +
+  scale_color_cmocean(name='haline', start=.2, end=.8, direction=-1) +
+  geom_smooth(method='lm', alpha=.5, se=F) +
+  theme_bw() +
+  labs(x='Temperature', y='Total biomass (Sv mean)', color='Distance offshore (km)') +
+  theme(legend.position = 'top')
+
+# Same but wiht longitude
+ggplot(cast.df, aes(x=temp_mean, y=area_Sv_mean_sum, color=lon)) +
+  geom_point(shape=16, alpha=1, size=2.5) +
+  scale_color_cmocean(name='haline', start=.2, end=.8, direction=-1) +
+  geom_smooth(method='lm', alpha=.5, se=F) +
+  theme_bw() +
+  labs(x='Temperature', y='Total biomass (Sv mean)', color='Longitude') +
+  theme(legend.position = 'top')
+
+# Interesting... 
+plot(cast.df$lon, cast.df$crossShoreDistance, col=factor(substr(cast.df$station_id,1,2)))
+plot(cast.df$lon, cast.df$lat)
+
+
+
+
+ggplot(cast.df, aes(x=temp_mean, y=swarm_mean_depth)) +
+  geom_point(size=2, shape=3) +
+  geom_smooth(method='lm') +
+  facet_wrap(~survey, scales='free')
