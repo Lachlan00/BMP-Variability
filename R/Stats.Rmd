@@ -11,6 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(ggplot2)
 library(ggpubr)
 library(sjPlot)
+library(nlme)
 # Note: rmdformats is also a dependency
 
 height=3
@@ -36,274 +37,27 @@ tab_model.wrap <- function(fit){
 }
 ```
 
-# 1. Error distributions
 
----
-
-Variable names:
-
-* **Mean aggregation depth** ("swarm_mean_depth")
-* **Mean aggregation coverage** ("area_corrected_area_sum")
-* **Mean aggregation density** ("Sv_mean_mean")
-* **Total Biomass** ("area_Sv_mean_sum")
-
-## Depth
-
----
-
-For depth use Gamma with log link function `Gamma(link='log')`.
-```{r, fig.height=height*2}
-op <- par(mfrow = c(2, 2))
-hist(cast.df$swarm_mean_depth, main='no trans')
-qqnorm(cast.df$swarm_mean_depth, main='no trans')
-hist(log(cast.df$swarm_mean_depth), main='natural log')
-qqnorm(log(cast.df$swarm_mean_depth), main='natural log')
-```
-
-## Coverage
-
----
-
-For coverage I used gaussian with cubic root transformation. This is the best transformation to make the data normal but I have no idea how to use this properly with the GLMs and I think it is casuing issues.
-```{r, fig.height=height*2}
-op <- par(mfrow = c(2, 2))
-hist(cast.df$area_corrected_area_sum, main='no trans')
-qqnorm(cast.df$area_corrected_area_sum, main='no trans')
-hist(cast.df$area_corrected_area_sum^(1/3), main='cubic')
-qqnorm(cast.df$area_corrected_area_sum^(1/3), main='cubic')
-```
-
-## Density
-
----
-
-Data is normal so just use Gaussian
-```{r, fig.height=height}
-op <- par(mfrow = c(1, 2))
-hist(cast.df$Sv_mean_mean, main=NULL)
-qqnorm(cast.df$Sv_mean_mean, main=NULL)
-```
-
-## Biomass
-
----
-
-Data is normal so just use Gaussian
-```{r, fig.height=height}
-op <- par(mfrow = c(1, 2))
-hist(cast.df$area_Sv_mean_sum)
-qqnorm(cast.df$area_Sv_mean_sum)
-```
-
-<br><br><br>
-
-
-# 2. GLM Models
-
----
-
-## Depth vs Environment
-
----
-
-### **depth ~ temp**
-
-Results show a strong positive relationship between temperature and aggregation depth (but this may well be related to a cross-correlation with offshore distance)
-```{r}
-fit <- glm(swarm_mean_depth ~ temp_mean, data=cast.df, family=Gamma(link='log'))
-tab_model.wrap(fit)
-```
-
-<br><br>
-
-### **depth ~ temp + salt**
-
-Lower AIC suggests a better fit when salinity is added so there is an additional layer. As we are not looking between surveys this is probably the result of the bass strait vs EAC water on longer time periods.
-```{r}
-fit <- glm(swarm_mean_depth ~ temp_mean + salt_mean, data=cast.df, family=Gamma(link='log'))
-tab_model.wrap(fit)
-```
-
-<br><br>
-
-### **depth ~ crossShoreDistance**
-
-Result here not surprising as depth increases as we go offshore so likely to impact mean swarm depth. Also note I called the variable "crossShoreDistance" but really should have said "Distance Offshore".
-```{r}
-fit <- glm(swarm_mean_depth ~ crossShoreDistance, data=cast.df, family=Gamma(link='log'))
-tab_model.wrap(fit)
-```
-
-<br><br><br>
-
-
-## Agg Coverage vs Environment
-
----
-
-I'm not sure what is going on here. I think the transformation I have used is breaking something I assume getting negative AIC scores here is a bit funky? Any advice for a better transformation?
-
-### **coverage ~ temp**
-
-```{r}
-fit <- glm(area_corrected_area_sum^(1/3) ~ temp_mean, data=cast.df, family='gaussian')
-tab_model.wrap(fit)
-```
-
-<br><br>
-
-### **coverage ~ temp + salt**
-```{r}
-fit <- glm(area_corrected_area_sum^(1/3) ~ temp_mean + salt_mean, data=cast.df, family='gaussian')
-tab_model.wrap(fit)
-```
-
-<br><br>
-
-### **coverage ~ crossShoreDistance**
-```{r}
-fit <- glm(area_corrected_area_sum^(1/3) ~ crossShoreDistance, data=cast.df, family='gaussian')
-tab_model.wrap(fit)
-```
-
-<br><br>
-
-### **coverage ~ temp +  crossShoreDistance**
-```{r}
-fit <- glm(area_corrected_area_sum^(1/3) ~ temp_mean + crossShoreDistance, data=cast.df, family='gaussian')
-tab_model.wrap(fit)
-```
-
-<br><br><br>
-
-
-## Agg Density vs Environment
-
----
-
-### **density ~ temp**
-
-This shows mean aggregation density is a function of temperature and the relationship is negative. 
-```{r}
-fit <- glm(Sv_mean_mean ~ temp_mean, data=cast.df, family='gaussian')
-tab_model.wrap(fit)
-```
-
-<br><br>
-
-### **density ~ temp + salt**
-
-Again the lower AIC score indicates adding in salinity to model fits the data better.  
-```{r}
-fit <- glm(Sv_mean_mean ~ temp_mean + salt_mean, data=cast.df, family='gaussian')
-tab_model.wrap(fit)
-```
-
-<br><br>
-
-### **density ~ crossShoreDistance**
-
-Not really sure how to best deal with this as again offshore distance relationship has a significantly lower AIC. 
-```{r}
-fit <- glm(Sv_mean_mean ~ crossShoreDistance, data=cast.df, family='gaussian')
-tab_model.wrap(fit)
-```
-
-<br><br>
-
-### **density ~ temp +  crossShoreDistance**
-```{r}
-fit <- glm(Sv_mean_mean ~ temp_mean + crossShoreDistance, data=cast.df, family='gaussian')
-tab_model.wrap(fit)
-```
-
-<br><br><br>
-
-
-## Biomass vs Environment
-
----
-
-### **biomass ~ temp**
-
-Same again as other relationships. 
-```{r}
-fit <- glm(area_Sv_mean_sum ~ temp_mean, data=cast.df, family='gaussian')
-tab_model.wrap(fit)
-```
-
-<br><br>
-
-### **biomass ~ temp + salt**
-
-Same again as other relationships. 
-```{r}
-fit <- glm(area_Sv_mean_sum ~ temp_mean + salt_mean, data=cast.df, family='gaussian')
-tab_model.wrap(fit)
-```
-
-<br><br>
-
-### **biomass ~ crossShoreDistance**
-
-Same again as other relationships. 
-```{r}
-fit <- glm(area_Sv_mean_sum ~ crossShoreDistance, data=cast.df, family='gaussian')
-tab_model.wrap(fit)
-```
-
-<br><br>
-
-### **biomass ~ temp + crossShoreDistance**
-
-```{r}
-fit <- glm(area_Sv_mean_sum ~ temp_mean + crossShoreDistance, data=cast.df, family='gaussian')
-tab_model.wrap(fit)
-```
-
-<br><br><br>
-
-## Temperature vs Crosshore Distance
-
----
-
-Temperature is normally distributed so just using family='gaussian'
-
-### **temp ~ crossShoreDistance**
-```{r}
-fit <- glm(temp_mean ~ crossShoreDistance, data=cast.df, family='gaussian')
-tab_model.wrap(fit)
-```
-
-<br><br>
-
-### **temp ~ crossShoreDistance x survey**
-
-Here I was trying to look at the relationship between cross shore distance and temperature (i.e quantify cross shore temperature gradients). Is this the right way to do it and how would you interpret it? It seems to show negative relationships but all the plots were clearly positive (see attached  PDF) so I think I am reading this wrong.  
-```{r}
-fit <- glm(temp_mean ~ crossShoreDistance*survey, data=cast.df, family='gaussian')
-tab_model.wrap(fit)
-```
-
-<br><br><br>
-
-# 2. Cluster GLMs
+# Cluster GLMs
 
 --- 
 
 Again not really sure how to to interpret these. But my take was that there is only significant differences between clusters for density and biomass. Is this your take? Matches the plots. 
 
-### **depth ~ temp x cluster**
+## **depth ~ temp x cluster**
 ```{r}
 fit <- glm(swarm_mean_depth ~ temp_mean*cluster, data=cast.df, family=Gamma(link='log'))
 tab_model.wrap(fit)
+anova(fit)
 
-ggplot(cast.df, aes(temp_mean, swarm_mean_depth, col = cluster)) + geom_point() + geom_smooth(method = "glm", method.args = list(family = Gamma(link = "log")))
+ggplot(cast.df, aes(temp_mean, swarm_mean_depth, col = cluster)) + 
+  geom_point() + 
+  geom_smooth(method = "glm", method.args = list(family = Gamma(link = "log")))
 ```
 
 <br><br>
 
-### **coverage ~ temp x cluster**
+## **coverage ~ temp x cluster**
 ```{r}
 ## use Box-Cox transformation for area 
 bc <- MASS::boxcox(area_corrected_area_sum ~ temp_mean*cluster, data = cast.df, plotit = FALSE)
@@ -317,12 +71,14 @@ cast.df <- dplyr::mutate(cast.df,
 fit <- glm(transf_area_sum ~ temp_mean*cluster, data=cast.df, family = "gaussian")
 tab_model.wrap(fit)
 
-ggplot(cast.df, aes(temp_mean, transf_area_sum, col = cluster)) + geom_point() + geom_smooth(method = "lm")
+ggplot(cast.df, aes(temp_mean, transf_area_sum, col = cluster)) + 
+  geom_point() + 
+  geom_smooth(method = "lm")
 ```
 
 <br><br>
 
-### **density ~ temp x cluster**
+## **density ~ temp x cluster**
 ```{r}
 fit <- glm(Sv_mean_mean ~ temp_mean*cluster, data=cast.df, family='gaussian')
 tab_model.wrap(fit)
@@ -330,12 +86,93 @@ tab_model.wrap(fit)
 ggplot(cast.df, aes(temp_mean, Sv_mean_mean, col = cluster)) + geom_point() + geom_smooth(method = "glm")
 ```
 
-<br><br>
 
-### **biomass ~ temp x cluster**
+<br><br><br>
+
+
+# Temperature and Salinity
+
+--- 
+
+## **temp ~ salt**
 ```{r}
-fit <- glm(area_Sv_mean_sum ~ temp_mean*cluster, data=cast.df, family='gaussian')
+fit <- glm(temp_mean ~ salt_mean, data=cast.df, family='gaussian')
 tab_model.wrap(fit)
 
-ggplot(cast.df, aes(temp_mean, area_Sv_mean_sum, col = cluster)) + geom_point() + geom_smooth(method = "glm")
+ggplot(cast.df, aes(salt_mean, temp_mean)) + 
+  geom_point() + 
+  geom_smooth(method = "glm", method.args = list(family='gaussian'))
+```
+
+
+<br><br><br>
+
+
+## **temp ~ salt x survey**
+```{r}
+fit <- glm(temp_mean ~ salt_mean, data = cast.df, family = gaussian)
+tab_model.wrap(fit)
+summary(fit)
+
+ggplot(cast.df, aes(salt_mean, temp_mean, col = survey)) + 
+  geom_point() + 
+  geom_smooth(method = "glm")
+```
+
+<br><br><br>
+
+# Crossshore Gradient
+
+---
+
+## **temp ~ crossShoreDistance**
+```{r}
+df.split <- split(cast.df, cast.df$survey)
+for (i in 1:length(df.split)){
+  message('\n', names(df.split)[i])
+  fit <- glm(temp_mean ~ crossShoreDistance, data=df.split[[i]])
+  #print(tab_model.wrap(fit))
+  print(summary(fit))
+}
+
+ggplot(cast.df, aes(crossShoreDistance, temp_mean)) + 
+  geom_point() + 
+  geom_smooth(method = "glm") +
+  facet_wrap('survey')
+```
+
+<br><br>
+
+## **coverage ~ crossShoreDistance**
+```{r}
+df.split <- split(cast.df, cast.df$survey)
+for (i in 1:length(df.split)){
+  message('\n', names(df.split)[i])
+  fit <- glm(transf_area_sum ~ crossShoreDistance, data=df.split[[i]])
+  #print(tab_model.wrap(fit))
+  print(summary(fit))
+}
+
+ggplot(cast.df, aes(crossShoreDistance, transf_area_sum)) + 
+  geom_point() + 
+  geom_smooth(method = "glm") +
+  facet_wrap('survey')
+```
+
+<br><br>
+
+## **density ~ crossShoreDistance**
+```{r}
+df.split <- split(cast.df, cast.df$survey)
+for (i in 1:length(df.split)){
+  message('\n', names(df.split)[i])
+  fit <- glm(Sv_mean_mean ~ crossShoreDistance, data=df.split[[i]])
+  #print(tab_model.wrap(fit))
+  print(summary(fit))
+}
+
+ggplot(cast.df, aes(crossShoreDistance, Sv_mean_mean)) + 
+  geom_point() + 
+  geom_smooth(method = "glm") +
+  facet_wrap('survey')
 ```

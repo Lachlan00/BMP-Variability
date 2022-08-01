@@ -97,7 +97,8 @@ outlier.rm <- function(df, variables, threshold=.99, verbose=T){
 # Make CTD/agg data frame of each CTD cast #
 #------------------------------------------#
 # CTD_area_agg filters agg data so only agg data in CTD area is considered
-CTD.agg <- function(CTD, agg, filter=TRUE, CTD_area_agg=FALSE,
+# max.depth reduces all data to only consider swarms in top N m (use fule foor penguins)
+CTD.agg <- function(CTD, agg, filter=TRUE, CTD_area_agg=FALSE, max.depth=NULL,
                     station_fn='./data/surveys/meta/transect_df.csv'){
   # Load transect station data
   stations <- read.csv(station_fn) 
@@ -106,6 +107,11 @@ CTD.agg <- function(CTD, agg, filter=TRUE, CTD_area_agg=FALSE,
   end_points <- lapply(end_points, function(df) df[c(1, nrow(df)),])
   end_points <- do.call(rbind, end_points)
   end_points <- end_points$id
+  
+  # filter values
+  if (!is.null(max.depth)){
+    agg <- agg[agg$Depth_mean < max.depth,]
+  }
   
   cast.df <- data.frame(survey=rep(NA, nrow(CTD$meta)))
   message('Extracting aggregation data for casts..')

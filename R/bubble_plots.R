@@ -214,16 +214,18 @@ ggsave("./figures/corr/intra_corr_simple.png", p.corr, width=14, height=14, bg='
 surveys <- unique(cast.df$survey)
 df.sst <- list()
 for (i in 1:length(surveys)){
-  dir <- paste0("./data/IMOS/SST_L3S/",surveys[i],"/")
+  dir <- paste0("./data/IMOS/MODIS/surveys/",surveys[i],"/")
   fn <- list.files(dir, pattern="*.nc")[1]
   nc_data <- nc_open(paste0(dir, fn))
-  lon <- ncvar_get(nc_data, "lon")
-  lat <- ncvar_get(nc_data, "lat", verbose = F)
-  time <- ncvar_get(nc_data, "time")
-  sst <- ncvar_get(nc_data, "sea_surface_temperature", 
-                   start=c(1,1,1), count=c(-1,-1,10)) - 273.15 # convert from kelvin
+  lon <- ncvar_get(nc_data, "longitude") # lon for AVHRR
+  lat <- ncvar_get(nc_data, "latitude", verbose = F) # lat for AVHRR
+  time <- ncvar_get(nc_data, "time") 
+  t <- ifelse(surveys[i] == '2018_S2', 9, 10)
+  sst <- ncvar_get(nc_data, "sst", # sea_surface_temperature
+                   start=c(1,1,1), count=c(-1,-1,t)) - 273.15 # convert from kelvin
   # flatten sst
   sst <- as.vector(apply(sst, 1:2, function(x) mean(x, na.rm=T)))
+  sst <- sst + 273.15
 
   
   
@@ -242,6 +244,8 @@ for (i in 1:length(surveys)){
 
 }
 df.sst <- do.call(rbind, df.sst)
+# sst to celcius
+
 
 ggplot(df.sst, aes(x=lon, y=lat, fill=sst)) +
   geom_tile()  +
@@ -254,8 +258,8 @@ fn <- 'bubble_sst_finescale'
 # xlim <- c(150.04, 150.5)
 # ylim <- c(-36.67, -35.85)
 # fn <- 'bubble_sst_mesoscale'
-maxsize <- 9
-minsize <- 2
+maxsize <- 10
+minsize <- 1
 mintemp <- 14
 maxtmep <- 20
 
@@ -271,12 +275,47 @@ df.sst <- df.sst[df.sst$lat > ylim[1]-0.1 &
                  df.sst$lon > xlim[1]-0.1 & 
                  df.sst$lon < xlim[2]+0.1,]
 
+
 # Filter to only show 2015_S1, 2018_S1 and 2018_S2
 survey.filter <- c("2015_S1", "2018_S1", "2018_S2")
-cast.df.f <- cast.df[cast.df$survey %in% survey.filter,]
-df.sst.f <- df.sst[df.sst$survey %in% survey.filter,]
+# cast.df.f <- cast.df[cast.df$survey %in% survey.filter,]
+# df.sst.f <- df.sst[df.sst$survey %in% survey.filter,]
+cast.df.f <- cast.df
+df.sst.f <- df.sst
 
-# Swarm Coverage
+bub_col  <- 'black'
+bub_fill <- 'white'
+stroke <- 1.5
+bub_shp <- 21
+bub_alpha = .8
+
+# Mean depth
+p.depth <- ggplot(cast.df.f, aes(x=lon, y=lat)) +
+  geom_tile(mapping=aes(x=lon, y=lat, fill=sst),
+            data=df.sst.f,
+            inherit.aes = F)  +
+  scale_fill_cmocean(name='thermal') +
+  guides(fill = "none") +
+  # coastline
+  geom_polygon(data=landShp, aes(x=long, y=lat, group=group), 
+               fill='grey', col='#636363', size=.6) +
+  # Bubble
+  geom_point(shape=bub_shp, color=bub_col, stroke=stroke, fill=bub_fill, alpha=bub_alpha,
+             mapping=aes(size=make_normal(swarm_mean_depth, minsize, maxsize))) +
+  scale_size(name = "Depth (m)",
+             breaks = fivenum(make_normal(cast.df$swarm_mean_depth, minsize, maxsize))[c(1,3,5)],
+             labels = c(5,25,95)) +#round(fivenum(cast.df$swarm_mean_depth),0)[c(1,3,5)]) +
+  coord_map(xlim=xlim,  ylim=ylim) +
+  theme_bw() + grids(linetype = "dashed") +
+  #scale_color_cmocean(name='thermal') +
+  facet_wrap(~survey, nrow=1) +
+  ggtitle("(A) Mean aggregation depth") +
+  labs(x=NULL, y=NULL)
+
+# Coverage
+cov_labs = as.character(ceiling(fivenum(cast.df$area_corrected_area_sum)*100))
+cov_labs[1] = '> 0'
+
 p.coverage <- ggplot(cast.df.f, aes(x=lon, y=lat)) +
   geom_tile(mapping=aes(x=lon, y=lat, fill=sst),
             data=df.sst.f,
@@ -287,16 +326,16 @@ p.coverage <- ggplot(cast.df.f, aes(x=lon, y=lat)) +
   geom_polygon(data=landShp, aes(x=long, y=lat, group=group), 
                fill='grey', col='#636363', size=.6) +
   # Bubble
-  geom_point(shape=1,
+  geom_point(shape=bub_shp, color=bub_col, stroke=stroke, fill=bub_fill, alpha=bub_alpha,
              mapping=aes(size=make_normal(area_corrected_area_sum, minsize, maxsize))) +
   scale_size(name = "Coverage (%)",
-             breaks = fivenum(make_normal(cast.df.f$area_corrected_area_sum, minsize, maxsize)),
-             labels = round(fivenum(cast.df.f$area_corrected_area_sum)*100, 2)) +
+             breaks = fivenum(make_normal(cast.df$area_corrected_area_sum, minsize, maxsize))[c(1,3,5)],
+             labels = cov_labs[c(1,3,5)]) +
   # Map stuff
   coord_map(xlim=xlim,  ylim=ylim) +
   theme_bw() + grids(linetype = "dashed") +
-  facet_wrap(~survey) +
-  ggtitle("(A) Aggregation coverage") +
+  facet_wrap(~survey, nrow=1) +
+  ggtitle("(B) Aggregation coverage") +
   labs(x=NULL, y=NULL)
 
 # Swarm Density
@@ -310,49 +349,25 @@ p.density <- ggplot(cast.df.f, aes(x=lon, y=lat)) +
   geom_polygon(data=landShp, aes(x=long, y=lat, group=group), 
                fill='grey', col='#636363', size=.6) +
   # Bubble
-  geom_point(shape=1,
+  geom_point(shape=bub_shp, color=bub_col, stroke=stroke, fill=bub_fill, alpha=bub_alpha,
              mapping=aes(size=make_normal(Sv_mean_mean, minsize, maxsize))) +
   scale_size(name = bquote(""*S[v]*" mean"),
-             breaks = fivenum(make_normal(cast.df.f$Sv_mean_mean, minsize, maxsize)),
-             labels = round(fivenum(cast.df.f$Sv_mean_mean),2)) +
+             breaks = fivenum(make_normal(cast.df$Sv_mean_mean, minsize, maxsize))[c(1,3,5)],
+             labels = round(fivenum(cast.df$Sv_mean_mean),0)[c(1,3,5)]) +
   # Map stuff
   coord_map(xlim=xlim,  ylim=ylim) +
   theme_bw() + grids(linetype = "dashed") +
   #scale_color_cmocean(name='thermal') +
-  facet_wrap(~survey) +
-  ggtitle(bquote("(B) Mean aggregation density")) +
+  facet_wrap(~survey, nrow=1) +
+  ggtitle(bquote("(C) Mean aggregation density")) +
   labs(x=NULL, y=NULL)
 
-# Mean depth
-p.depth <- ggplot(cast.df.f, aes(x=lon, y=lat)) +
-  geom_tile(mapping=aes(x=lon, y=lat, fill=sst),
-            data=df.sst.f,
-            inherit.aes = F)  +
-  scale_fill_cmocean(name='thermal') +
-  guides(fill = "none") +
-  # coastline
-  geom_polygon(data=landShp, aes(x=long, y=lat, group=group), 
-               fill='grey', col='#636363', size=.6) +
-  # Bubble
-  geom_point(shape=1,
-             mapping=aes(size=make_normal(swarm_mean_depth, minsize, maxsize))) +
-  scale_size(name = "Depth (m)",
-             breaks = fivenum(make_normal(cast.df.f$swarm_mean_depth, minsize, maxsize)),
-             labels = round(fivenum(cast.df.f$swarm_mean_depth),0)) +
-  coord_map(xlim=xlim,  ylim=ylim) +
-  theme_bw() + grids(linetype = "dashed") +
-  #scale_color_cmocean(name='thermal') +
-  facet_wrap(~survey) +
-  ggtitle("(C) Mean aggregation depth") +
-  labs(x=NULL, y=NULL)
-
-p.out <- ggarrange(p.coverage, p.density, p.depth, ncol=1)
+p.out <- ggarrange(p.depth, p.coverage, p.density, ncol=1)
 #legendpos <- theme(legend.position = "right")
 # width = 6
 # height = 9
-ggsave(paste0("./figures/bubbleplots/bubbleOut.png"), p.out, width=8, height=12, bg='white')
-
-
+# Save all with plot zoom save
+ggsave(paste0("./figures/bubbleplots/bubbleOut_filter.png"), p.out, width=8, height=12, bg='white')
 # ggsave(paste0("./figures/bubbleplots/",fn,"_SwarmDepth.png"), p.depth + legendpos, width=width, height=height)
 # ggsave(paste0("./figures/bubbleplots/",fn,"_SwarmDesnity.png"), p.density + legendpos, width=width, height=height)
 # ggsave(paste0("./figures/bubbleplots/",fn,"_SwarmCoverage.png"), p.coverage + legendpos, width=width, height=height)

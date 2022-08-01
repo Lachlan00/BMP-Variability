@@ -3,7 +3,7 @@ library(sp)
 library(rgdal)
 library(NISTunits)
 library(htmlwidgets)
-library(FRK)
+#library(FRK)
 
 #################
 # Spatial Tools #
