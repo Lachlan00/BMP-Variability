@@ -110,7 +110,7 @@ ggplot(cast.df, aes(salt_mean, temp_mean)) +
 
 ## **temp ~ salt x survey**
 ```{r}
-fit <- glm(temp_mean ~ salt_mean, data = cast.df, family = gaussian)
+fit <- glm(temp_mean ~ salt_mean*survey, data = cast.df, family = gaussian)
 tab_model.wrap(fit)
 summary(fit)
 
